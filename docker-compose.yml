@@ -1,0 +1,116 @@
+version: "3.9"
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      # OTLP
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+      # Observability / health
+      - "8888:8888"     # Collector metrics (Prometheus scrape)
+      - "13133:13133"   # Health check
+      - "55679:55679"   # zPages
+    depends_on:
+      - jaeger
+    networks:
+      - otel
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14250:14250"
+      - "14268:14268"
+      - "9411:9411"   # Zipkin compatible
+    networks:
+      - otel
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=2d"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel-collector
+    networks:
+      - otel
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - otel
+
+  # --- Sample traffic generators (optional but useful) ---
+
+  telemetrygen-traces:
+    image: ghcr.io/open-telemetry/opentelemetry-collector/telemetrygen:latest
+    container_name: telemetrygen-traces
+    command:
+      - "traces"
+      - "--otlp-endpoint=otel-collector:4317"
+      - "--otlp-insecure=true"
+      - "--rate=5"            # spans/sec
+      - "--duration=0"        # 0 = run forever
+      - "--service=sample-tracegen"
+    depends_on:
+      - otel-collector
+    networks:
+      - otel
+    restart: unless-stopped
+
+  telemetrygen-metrics:
+    image: ghcr.io/open-telemetry/opentelemetry-collector/telemetrygen:latest
+    container_name: telemetrygen-metrics
+    command:
+      - "metrics"
+      - "--otlp-endpoint=otel-collector:4317"
+      - "--otlp-insecure=true"
+      - "--metrics=counter,gauge,histogram"
+      - "--interval=5s"
+      - "--duration=0"
+      - "--service=sample-metricgen"
+    depends_on:
+      - otel-collector
+    networks:
+      - otel
+    restart: unless-stopped
+
+  telemetrygen-logs:
+    image: ghcr.io/open-telemetry/opentelemetry-collector/telemetrygen:latest
+    container_name: telemetrygen-logs
+    command:
+      - "logs"
+      - "--otlp-endpoint=otel-collector:4317"
+      - "--otlp-insecure=true"
+      - "--rate=2"       # logs/sec
+      - "--duration=0"
+      - "--service=sample-logsgen"
+    depends_on:
+      - otel-collector
+    networks:
+      - otel
+    restart: unless-stopped
+
+networks:
+  otel:
+    driver: bridge

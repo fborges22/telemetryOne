@@ -1,0 +1,54 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch: {}
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 75
+    spike_limit_percentage: 25
+  resourcedetection:
+    detectors: [env, system] # adds host info
+    timeout: 5s
+
+exporters:
+  # For quick visibility in the terminal
+  debug:
+    verbosity: basic
+
+  # Expose Collector's own metrics to Prometheus (scraped at :8888 by default)
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+  # Send traces to Jaeger all-in-one
+  jaeger:
+    endpoint: "jaeger:14250"
+    tls:
+      insecure: true
+
+extensions:
+  health_check:
+    endpoint: "0.0.0.0:13133"
+  pprof:
+    endpoint: "0.0.0.0:1777"
+  zpages:
+    endpoint: "0.0.0.0:55679"
+
+service:
+  extensions: [health_check, pprof, zpages]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [jaeger, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
