@@ -11,21 +11,16 @@ processors:
     limit_percentage: 75
     spike_limit_percentage: 25
   resourcedetection:
-    detectors: [env, system] # adds host info
+    detectors: [env, system]
     timeout: 5s
 
 exporters:
-  # For quick visibility in the terminal
   debug:
     verbosity: basic
-
-  # Expose Collector's own metrics to Prometheus (scraped at :8888 by default)
   prometheus:
     endpoint: "0.0.0.0:8889"
-
-  # Send traces to Jaeger all-in-one
-  jaeger:
-    endpoint: "jaeger:14250"
+  otlp/jaeger:
+    endpoint: "jaeger:4317"
     tls:
       insecure: true
 
@@ -43,7 +38,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [jaeger, debug]
+      exporters: [otlp/jaeger, debug]
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]

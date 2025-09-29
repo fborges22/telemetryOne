@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
@@ -85,7 +83,6 @@ services:
       - "metrics"
       - "--otlp-endpoint=otel-collector:4317"
       - "--otlp-insecure=true"
-      - "--metrics=counter,gauge,histogram"
       - "--interval=5s"
       - "--duration=inf"
       - "--service=sample-metricgen"
