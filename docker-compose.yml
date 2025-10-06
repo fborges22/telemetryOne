@@ -10,7 +10,8 @@ services:
       - "4317:4317"     # OTLP gRPC
       - "4318:4318"     # OTLP HTTP
       # Observability / health
-      - "8888:8888"     # Collector metrics (Prometheus scrape)
+      - "8888:8888"     # Internal Collector metrics (Prometheus scrape)
+      - "8889:8889"     # External Collector metrics (Prometheus scrape)
       - "13133:13133"   # Health check
       - "55679:55679"   # zPages
     depends_on:
