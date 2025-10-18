@@ -1,4 +1,4 @@
-# OpenTelemetry Demo Stack
+# 🔭 OpenTelemetry Demo Stack
 
 This project provides a ready-to-run **observability sandbox** with the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/), example telemetry generators, and popular backends (Jaeger, Prometheus, Grafana). It lets you explore **traces, metrics, and logs** end-to-end with minimal setup.
 
