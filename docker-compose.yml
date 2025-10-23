@@ -60,6 +60,56 @@ services:
       - loki
     networks:
       - otel
+      
+  # --- Sample traffic generators (optional but useful) ---
+
+  telemetrygen-traces:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
+    container_name: telemetrygen-traces
+    command:
+      - "traces"
+      - "--otlp-endpoint=otel-collector:4317"
+      - "--otlp-insecure=true"
+      - "--rate=5"            # spans/sec
+      - "--duration=inf"        # 0 = run forever
+      - "--service=sample-tracegen"
+    depends_on:
+      - otel-collector
+    networks:
+      - otel
+    restart: unless-stopped
+
+  telemetrygen-metrics:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
+    container_name: telemetrygen-metrics
+    command:
+      - "metrics"
+      - "--otlp-endpoint=otel-collector:4317"
+      - "--otlp-insecure=true"
+      - "--interval=5s"
+      - "--duration=inf"
+      - "--service=sample-metricgen"
+    depends_on:
+      - otel-collector
+    networks:
+      - otel
+    restart: unless-stopped
+
+  telemetrygen-logs:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
+    container_name: telemetrygen-logs
+    command:
+      - "logs"
+      - "--otlp-endpoint=otel-collector:4317"
+      - "--otlp-insecure=true"
+      - "--rate=2"       # logs/sec
+      - "--duration=inf"
+      - "--service=sample-logsgen"
+    depends_on:
+      - otel-collector
+    networks:
+      - otel
+    restart: unless-stopped
 
   loki:
       image: grafana/loki:latest
