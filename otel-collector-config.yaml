@@ -21,6 +21,8 @@ exporters:
     verbosity: basic
   prometheus:
     endpoint: "0.0.0.0:8889"
+  loki:
+    endpoint: "http://loki:3100/loki/api/v1/push"
   otlp/jaeger:
     endpoint: "jaeger:4317"
     tls:
@@ -48,4 +50,4 @@ service:
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [debug]
+      exporters: [loki]

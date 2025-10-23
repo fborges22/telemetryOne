@@ -1,0 +1,36 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+
+common:
+  path_prefix: /loki
+  replication_factor: 1
+  # O index_store agora usa o kvstore (inmemory)
+
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory # Simples para desenvolvimento
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config: # E mais seguro usar storage_config em vez de common.storage
+  boltdb_shipper:
+    active_index_directory: /tmp/loki/boltdb-shipper-active
+    cache_location: /tmp/loki/boltdb-shipper-cache
+    cache_ttl: 24h
+  filesystem: 
+    directory: /tmp/loki/chunks
+
+limits_config:
+  allow_structured_metadata: false
