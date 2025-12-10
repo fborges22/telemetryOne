@@ -39,7 +39,7 @@ This project provides a ready-to-run **observability sandbox** with the [OpenTel
 ### 1. Start the stack
 
 ```bash
-docker compose up -d
+docker-compose up -d
 ```
 
 ### 2. Check container status
@@ -51,7 +51,7 @@ docker ps -a
 ### 3. Stop everything
 
 ```bash
-docker compose down
+docker-compose down
 ```
 
 ---
