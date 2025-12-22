@@ -21,6 +21,10 @@ exporters:
     verbosity: basic
   prometheus:
     endpoint: "0.0.0.0:8889"
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(otelcol_.*|scrape_.*)'
+        action: drop
   loki:
     endpoint: "http://loki:3100/loki/api/v1/push"
   otlp/jaeger:
@@ -51,8 +55,3 @@ service:
       receivers: [otlp]
       processors: [memory_limiter, batch]
       exporters: [loki]
-
-metric_relabel_configs:
-  - source_labels: [__name__]
-    regex: '(otelcol_.*|scrape_.*)'
-    action: drop
