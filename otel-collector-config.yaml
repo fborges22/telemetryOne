@@ -54,5 +54,5 @@ service:
 
 metric_relabel_configs:
   - source_labels: [__name__]
-    regex: 'otelcol_.*'
+    regex: '(otelcol_.*|scrape_.*)'
     action: drop
