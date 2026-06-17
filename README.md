@@ -38,6 +38,32 @@ This project provides a ready-to-run **observability sandbox** with the [OpenTel
 
 ### 1. Start the stack
 
+If you have the `~/Downloads/magicssl.tgz` certificate bundle, use the deployment script so the stack starts with TLS enabled on the public endpoints:
+
+```bash
+./deploy.sh
+```
+
+You can override the archive path if needed:
+
+```bash
+SSL_ARCHIVE=/path/to/magicssl.tgz ./deploy.sh
+```
+
+To stop the stack and remove the unpacked certificates:
+
+```bash
+./undeploy.sh
+```
+
+To stop the stack but keep the unpacked certificates for a later redeploy:
+
+```bash
+KEEP_SSL=true ./undeploy.sh
+```
+
+For local development without TLS automation, you can still use Compose directly:
+
 ```bash
 docker-compose up -d
 ```
@@ -58,13 +84,13 @@ docker-compose down
 
 ## Access the UIs
 
-* **Jaeger UI (Traces):** [http://localhost:16686](http://localhost:16686)
-  Search for service names like `sample-tracegen`.
-
-* **Prometheus (Metrics DB):** [http://localhost:9090](http://localhost:9090)
-
-* **Grafana (Dashboards):** [http://localhost:3000](http://localhost:3000)
+* **Grafana (Dashboards):** [https://localhost/grafana/](https://localhost/grafana/)
   Login: `admin` / `admin`
+
+* **Prometheus (Metrics DB):** [https://localhost/prometheus/](https://localhost/prometheus/)
+
+* **Jaeger UI (Traces):** [https://localhost/jaeger/](https://localhost/jaeger/)
+  Search for service names like `sample-tracegen`.
 
 ---
 
@@ -72,8 +98,8 @@ docker-compose down
 
 Your own apps can send telemetry directly to the Collector:
 
-* gRPC: `localhost:4317`
-* HTTP: `http://localhost:4318`
+* gRPC with TLS: `localhost:4317`
+* HTTP with TLS: `https://localhost:4318`
 
 ---
 
@@ -95,6 +121,7 @@ Your own apps can send telemetry directly to the Collector:
 
 ## Troubleshooting
 
+* **Reverse proxy exited** → Check `docker logs reverse-proxy`. This usually means the certificate archive was not unpacked into `.ssl/` or the TLS files are incomplete.
 * **Collector exited** → Check `docker logs otel-collector`. Often caused by invalid exporter config.
 * **Telemetrygen logs restart** → Ensure `--duration=inf` or `--logs > 0` is set.
 * **No traces in Jaeger** → Confirm traces pipeline exporter is `otlp/jaeger` and the container can reach `jaeger:4317`.

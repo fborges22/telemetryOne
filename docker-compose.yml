@@ -5,15 +5,15 @@ services:
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
-    ports:
+    expose:
       # OTLP
-      - "4317:4317"     # OTLP gRPC
-      - "4318:4318"     # OTLP HTTP
+      - "4317"          # OTLP gRPC
+      - "4318"          # OTLP HTTP
       # Observability / health
-      - "8888:8888"     # Internal Collector metrics (Prometheus scrape)
-      - "8889:8889"     # External Collector metrics (Prometheus scrape)
-      - "13133:13133"   # Health check
-      - "55679:55679"   # zPages
+      - "8888"          # Internal Collector metrics (Prometheus scrape)
+      - "8889"          # External Collector metrics (Prometheus scrape)
+      - "13133"         # Health check
+      - "55679"         # zPages
     depends_on:
       - jaeger
       - loki
@@ -26,11 +26,13 @@ services:
     container_name: jaeger
     environment:
       - COLLECTOR_ZIPKIN_HTTP_PORT=9411
-    ports:
-      - "16686:16686" # Jaeger UI
-      - "14250:14250"
-      - "14268:14268"
-      - "9411:9411"   # Zipkin compatible
+      - QUERY_BASE_PATH=/jaeger
+    expose:
+      - "16686" # Jaeger UI
+      - "4317"
+      - "14250"
+      - "14268"
+      - "9411"  # Zipkin compatible
     networks:
       - otel
     restart: unless-stopped
@@ -41,10 +43,12 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.retention.time=2d"
+      - "--web.external-url=/prometheus/"
+      - "--web.route-prefix=/prometheus/"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
-      - "9090:9090"
+    expose:
+      - "9090"
     depends_on:
       - otel-collector
     networks:
@@ -56,8 +60,10 @@ services:
     container_name: grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
-    ports:
-      - "3000:3000"
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    expose:
+      - "3000"
     depends_on:
       - prometheus
       - loki
@@ -121,8 +127,29 @@ services:
     volumes:
       - ./loki-config.yaml:/etc/loki/config.yaml
     command: -config.file=/etc/loki/config.yaml
+    expose:
+      - "3100"
+    networks:
+      - otel
+    restart: unless-stopped
+
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    container_name: reverse-proxy
+    depends_on:
+      - grafana
+      - jaeger
+      - loki
+      - otel-collector
+      - prometheus
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./.ssl:/etc/nginx/certs:ro
     ports:
-      - "3100:3100"  
+      - "80:80"
+      - "443:443"
+      - "4317:4317"
+      - "4318:4318"
     networks:
       - otel
     restart: unless-stopped
