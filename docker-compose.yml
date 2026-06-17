@@ -82,6 +82,7 @@ services:
     networks:
       - otel
     restart: unless-stopped
+    scale: 0
 
   telemetrygen-metrics:
     image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
@@ -98,6 +99,7 @@ services:
     networks:
       - otel
     restart: unless-stopped
+    scale: 0
 
   telemetrygen-logs:
     image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:latest
@@ -114,6 +116,7 @@ services:
     networks:
       - otel
     restart: unless-stopped
+    scale: 0
 
   loki:
     image: grafana/loki:latest
